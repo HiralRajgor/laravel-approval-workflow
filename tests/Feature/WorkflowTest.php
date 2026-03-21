@@ -10,9 +10,11 @@ use App\Mail\DocumentSubmittedMail;
 use App\Models\Document;
 use App\Models\User;
 use App\Services\WorkflowService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -29,18 +31,37 @@ class WorkflowTest extends TestCase
 
         // Fix 1: ensure Blade cache dir exists so mail templates compile in tests
         $viewCachePath = storage_path('framework/views');
-        if (! is_dir($viewCachePath)) {
+        if (!is_dir($viewCachePath)) {
             mkdir($viewCachePath, 0755, true);
         }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function author(): User    { return User::factory()->author()->create(); }
-    private function reviewer(): User  { return User::factory()->reviewer()->create(); }
-    private function approver(): User  { return User::factory()->approver()->create(); }
-    private function publisher(): User { return User::factory()->publisher()->create(); }
-    private function admin(): User     { return User::factory()->admin()->create(); }
+    private function author(): User
+    {
+        return User::factory()->author()->create();
+    }
+
+    private function reviewer(): User
+    {
+        return User::factory()->reviewer()->create();
+    }
+
+    private function approver(): User
+    {
+        return User::factory()->approver()->create();
+    }
+
+    private function publisher(): User
+    {
+        return User::factory()->publisher()->create();
+    }
+
+    private function admin(): User
+    {
+        return User::factory()->admin()->create();
+    }
 
     private function draft(): Document
     {
@@ -53,7 +74,7 @@ class WorkflowTest extends TestCase
     public function it_rejects_an_invalid_state_skip(): void
     {
         $doc = $this->draft();
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
         $this->workflow->transition($doc, DocumentStatus::APPROVED, $this->admin());
     }
 
@@ -61,7 +82,7 @@ class WorkflowTest extends TestCase
     public function it_rejects_a_backwards_transition(): void
     {
         $doc = Document::factory()->inReview()->create(['author_id' => $this->author()->id]);
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
         $this->workflow->transition($doc, DocumentStatus::DRAFT, $this->admin());
     }
 
@@ -69,7 +90,7 @@ class WorkflowTest extends TestCase
     public function published_document_cannot_be_transitioned(): void
     {
         $doc = Document::factory()->published()->create(['author_id' => $this->author()->id]);
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
         $this->workflow->transition($doc, DocumentStatus::DRAFT, $this->admin());
     }
 
@@ -79,7 +100,7 @@ class WorkflowTest extends TestCase
     public function reviewer_cannot_publish_a_document(): void
     {
         $doc = Document::factory()->approved()->create(['author_id' => $this->author()->id]);
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
         $this->workflow->transition($doc, DocumentStatus::PUBLISHED, $this->reviewer());
     }
 
@@ -87,14 +108,14 @@ class WorkflowTest extends TestCase
     public function publisher_cannot_approve_a_document(): void
     {
         $doc = Document::factory()->inReview()->create(['author_id' => $this->author()->id]);
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
         $this->workflow->transition($doc, DocumentStatus::APPROVED, $this->publisher());
     }
 
     #[Test]
     public function admin_can_perform_any_valid_transition(): void
     {
-        $doc    = $this->draft();
+        $doc = $this->draft();
         $result = $this->workflow->transition($doc, DocumentStatus::PENDING, $this->admin());
         $this->assertEquals(DocumentStatus::PENDING, $result->status);
     }
@@ -106,9 +127,9 @@ class WorkflowTest extends TestCase
     {
         Mail::fake();
 
-        $author    = $this->author();
-        $reviewer  = $this->reviewer();
-        $approver  = $this->approver();
+        $author = $this->author();
+        $reviewer = $this->reviewer();
+        $approver = $this->approver();
         $publisher = $this->publisher();
 
         $doc = Document::factory()->draft()->create(['author_id' => $author->id]);
@@ -135,7 +156,7 @@ class WorkflowTest extends TestCase
     {
         Mail::fake();
 
-        $author   = $this->author();
+        $author = $this->author();
         $reviewer = $this->reviewer();
 
         $doc = Document::factory()->inReview()->create(['author_id' => $author->id]);
@@ -159,8 +180,8 @@ class WorkflowTest extends TestCase
 
         Event::assertDispatched(DocumentTransitioned::class, function ($e) use ($doc) {
             return $e->document->id === $doc->id
-                && $e->fromStatus   === DocumentStatus::DRAFT
-                && $e->toStatus     === DocumentStatus::PENDING;
+                && $e->fromStatus === DocumentStatus::DRAFT
+                && $e->toStatus === DocumentStatus::PENDING;
         });
     }
 
@@ -170,7 +191,7 @@ class WorkflowTest extends TestCase
         Mail::fake();
 
         $reviewer = $this->reviewer();
-        $doc      = $this->draft();
+        $doc = $this->draft();
 
         $this->workflow->submit($doc, $doc->author);
 
@@ -184,9 +205,9 @@ class WorkflowTest extends TestCase
     {
         Mail::fake();
 
-        $author   = $this->author();
+        $author = $this->author();
         $approver = $this->approver();
-        $doc      = Document::factory()->inReview()->create(['author_id' => $author->id]);
+        $doc = Document::factory()->inReview()->create(['author_id' => $author->id]);
 
         $this->workflow->approve($doc, $approver);
 
@@ -200,9 +221,9 @@ class WorkflowTest extends TestCase
     {
         Mail::fake();
 
-        $author   = $this->author();
+        $author = $this->author();
         $reviewer = $this->reviewer();
-        $doc      = Document::factory()->inReview()->create(['author_id' => $author->id]);
+        $doc = Document::factory()->inReview()->create(['author_id' => $author->id]);
 
         $this->workflow->reject($doc, $reviewer, 'Needs revision.');
 
@@ -224,8 +245,8 @@ class WorkflowTest extends TestCase
         $this->assertDatabaseHas('document_transitions', [
             'document_id' => $doc->id,
             'from_status' => 'draft',
-            'to_status'   => 'pending',
-            'comment'     => 'Ready for review.',
+            'to_status' => 'pending',
+            'comment' => 'Ready for review.',
         ]);
     }
 
@@ -239,8 +260,8 @@ class WorkflowTest extends TestCase
 
         $this->assertDatabaseHas('audit_logs', [
             'auditable_type' => Document::class,
-            'auditable_id'   => $doc->id,
-            'event'          => 'status_changed',
+            'auditable_id' => $doc->id,
+            'event' => 'status_changed',
         ]);
     }
 
@@ -250,23 +271,23 @@ class WorkflowTest extends TestCase
     public function api_transition_endpoint_returns_403_for_wrong_role(): void
     {
         $author = $this->author();
-        $doc    = Document::factory()->inReview()->create(['author_id' => $author->id]);
+        $doc = Document::factory()->inReview()->create(['author_id' => $author->id]);
 
         // Fix 2: pass 'sanctum' guard explicitly so actingAs works on API routes
         $this->actingAs($author, 'sanctum')
-             ->postJson("/api/documents/{$doc->id}/transition", ['status' => 'approved'])
-             ->assertForbidden();
+            ->postJson("/api/documents/{$doc->id}/transition", ['status' => 'approved'])
+            ->assertForbidden();
     }
 
     #[Test]
     public function api_transition_endpoint_returns_422_for_invalid_state(): void
     {
         $admin = $this->admin();
-        $doc   = Document::factory()->published()->create(['author_id' => $this->author()->id]);
+        $doc = Document::factory()->published()->create(['author_id' => $this->author()->id]);
 
         $this->actingAs($admin, 'sanctum')
-             ->postJson("/api/documents/{$doc->id}/transition", ['status' => 'draft'])
-             ->assertUnprocessable();
+            ->postJson("/api/documents/{$doc->id}/transition", ['status' => 'draft'])
+            ->assertUnprocessable();
     }
 
     #[Test]
@@ -275,9 +296,9 @@ class WorkflowTest extends TestCase
         $doc = $this->draft();
 
         $this->actingAs($doc->author, 'sanctum')
-             ->getJson("/api/documents/{$doc->id}")
-             ->assertOk()
-             ->assertJsonPath('data.status.value', 'draft')
-             ->assertJsonPath('data.allowed_transitions.0.value', 'pending');
+            ->getJson("/api/documents/{$doc->id}")
+            ->assertOk()
+            ->assertJsonPath('data.status.value', 'draft')
+            ->assertJsonPath('data.allowed_transitions.0.value', 'pending');
     }
 }
