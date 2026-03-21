@@ -348,6 +348,9 @@ Then open: [http://localhost:8000/api/documentation](http://localhost:8000/api/d
 
 ---
 
+## Live Demo
+[Live Demo](https://hiralrajgor.github.io/approval-workflow)
+
 ## Key Design Decisions
 
 See **[DECISIONS.md](./DECISIONS.md)** for full architectural decision records. Summary:
@@ -442,7 +445,7 @@ php artisan test --filter it_rejects_an_invalid_state_skip
 
 ## Author
 
-Built by [Your Name](https://github.com/your-username) — 8 years building backend systems in Laravel, primarily in ERP, logistics, and compliance domains.
+Built by [Hiral Rajgor](https://github.com/HiralRajgor) — 8 years building backend systems in Laravel, primarily in ERP, logistics, and compliance domains.
 
 This project reflects patterns extracted from production approval workflows at enterprise scale. The state machine, event architecture, and dual-audit-table design are battle-tested approaches, not academic exercises.
 
