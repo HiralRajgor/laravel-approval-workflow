@@ -1,0 +1,61 @@
+{
+    "name": "your-username/laravel-approval-workflow",
+    "description": "Production-grade document approval workflow engine — state machine, RBAC, async mail, audit trail.",
+    "keywords": ["laravel", "workflow", "approval", "state-machine", "rbac"],
+    "license": "MIT",
+    "type": "project",
+    "require": {
+        "php": "^8.3",
+        "laravel/framework": "^11.0",
+        "laravel/sanctum": "^4.0",
+        "darkaonline/l5-swagger": "^8.6"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "laravel/pint": "^1.0",
+        "phpunit/phpunit": "^11.0",
+        "mockery/mockery": "^1.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "test": [
+            "@php artisan test"
+        ],
+        "test:coverage": [
+            "@php artisan test --coverage"
+        ],
+        "lint": [
+            "./vendor/bin/pint"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

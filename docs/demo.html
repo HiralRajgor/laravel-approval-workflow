@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Approval Workflow — Interactive Demo</title>
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --border:   #2a2d3a;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --accent:   #6366f1;
+    --mono:     'JetBrains Mono', 'Fira Code', monospace;
+
+    --draft:    #64748b;
+    --pending:  #eab308;
+    --review:   #3b82f6;
+    --approved: #22c55e;
+    --rejected: #ef4444;
+    --published:#10b981;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  header {
+    max-width: 960px;
+    margin: 0 auto 40px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+  }
+
+  header p { color: var(--muted); font-size: 13px; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .grid {
+    max-width: 960px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── Left panel ─────────────────────── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Role switcher */
+  .role-list { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+
+  .role-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.15s;
+    font-size: 13px;
+  }
+
+  .role-btn:hover { border-color: var(--accent); }
+  .role-btn.active { border-color: var(--accent); background: rgba(99,102,241,0.12); }
+  .role-btn .role-name { font-weight: 600; }
+  .role-btn .role-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .role-btn .col { display: flex; flex-direction: column; text-align: left; }
+
+  /* Document card */
+  .doc-card {
+    margin: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .doc-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  .doc-meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Action buttons */
+  .actions { display: flex; flex-direction: column; gap: 6px; }
+
+  .action-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .action-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-submit    { background: #eab308; color: #000; }
+  .btn-review    { background: #3b82f6; color: #fff; }
+  .btn-approve   { background: #22c55e; color: #000; }
+  .btn-reject    { background: #ef4444; color: #fff; }
+  .btn-publish   { background: #10b981; color: #fff; }
+  .btn-revise    { background: #6366f1; color: #fff; }
+
+  /* ── Right panel ─────────────────────── */
+  .right { display: flex; flex-direction: column; gap: 20px; }
+
+  /* State machine diagram */
+  .diagram-wrap { padding: 0; }
+
+  svg.sm { width: 100%; height: auto; }
+
+  /* Timeline */
+  .timeline { padding: 14px 18px; }
+  .timeline-item {
+    display: flex;
+    gap: 14px;
+    padding-bottom: 20px;
+    position: relative;
+  }
+
+  .timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .tl-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .tl-content { flex: 1; }
+  .tl-header { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+  .tl-label { font-weight: 600; font-size: 13px; }
+  .tl-time { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .tl-desc { font-size: 12px; color: var(--muted); }
+  .tl-comment {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+    border-left: 2px solid var(--accent);
+    padding: 6px 10px;
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Comment input */
+  .comment-row {
+    padding: 0 12px 12px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .comment-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .comment-input:focus { border-color: var(--accent); }
+  .comment-input::placeholder { color: var(--muted); }
+
+  /* toast */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1e293b;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    z-index: 100;
+  }
+
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: #22c55e; color: #22c55e; }
+  #toast.error   { border-color: #ef4444; color: #ef4444; }
+
+  /* Code block */
+  .code-block {
+    background: #0a0c12;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: #a5b4fc;
+    overflow-x: auto;
+  }
+
+  .code-block .kw  { color: #c084fc; }
+  .code-block .str { color: #86efac; }
+  .code-block .cm  { color: #475569; }
+  .code-block .fn  { color: #67e8f9; }
+
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Document Approval Workflow Engine</h1>
+  <p>Interactive demo — switch roles, trigger transitions, watch the audit trail update in real time.</p>
+</header>
+
+<div class="grid">
+
+  <!-- Left: Controls -->
+  <div>
+    <!-- Role switcher -->
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-header">👤 Active Role</div>
+      <div class="role-list" id="roleList"></div>
+    </div>
+
+    <!-- Document card -->
+    <div class="panel">
+      <div class="panel-header">📄 Document</div>
+      <div class="doc-card">
+        <div class="doc-title">Q4 Financial Report</div>
+        <div class="doc-meta">Author: Alice Author &nbsp;·&nbsp; ID: #1</div>
+        <div class="status-row">
+          <div class="status-dot" id="statusDot"></div>
+          <span class="badge" id="statusBadge"></span>
+        </div>
+        <div class="comment-row" style="padding:0 0 12px 0">
+          <input class="comment-input" id="commentInput" placeholder="Optional comment…" />
+        </div>
+        <div class="actions" id="actions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Diagram + Timeline + Code -->
+  <div class="right">
+
+    <!-- State machine diagram -->
+    <div class="panel diagram-wrap">
+      <div class="panel-header">🗺 State Machine Graph</div>
+      <div style="padding:20px">
+        <svg class="sm" viewBox="0 0 560 260" xmlns="http://www.w3.org/2000/svg" id="smSvg">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+            </marker>
+            <marker id="arrActive" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+            </marker>
+          </defs>
+
+          <!-- Edges (drawn first so nodes appear on top) -->
+          <!-- Draft → Pending -->
+          <line x1="90" y1="60" x2="190" y2="60" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)" id="edge-draft-pending"/>
+          <!-- Pending → In Review -->
+          <line x1="270" y1="60" x2="360" y2="60" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)" id="edge-pending-in_review"/>
+          <!-- Pending → Rejected -->
+          <path d="M 230 80 C 230 160 320 160 320 160" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arr)" id="edge-pending-rejected"/>
+          <!-- In Review → Approved -->
+          <line x1="440" y1="60" x2="510" y2="60" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)" id="edge-in_review-approved"/>
+          <!-- In Review → Rejected -->
+          <path d="M 400 80 C 400 160 340 160 340 160" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arr)" id="edge-in_review-rejected"/>
+          <!-- Approved → Published -->
+          <line x1="530" y1="80" x2="470" y2="200" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)" id="edge-approved-published"/>
+          <!-- Rejected → Draft -->
+          <path d="M 300 180 C 300 230 50 230 50 80" stroke="#475569" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#arr)" id="edge-rejected-draft"/>
+
+          <!-- Nodes -->
+          <g id="node-draft">
+            <rect x="10" y="40" width="80" height="36" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+            <text x="50" y="63" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="system-ui" font-weight="600">DRAFT</text>
+          </g>
+          <g id="node-pending">
+            <rect x="190" y="40" width="80" height="36" rx="6" fill="#1e293b" stroke="#eab308" stroke-width="1.5"/>
+            <text x="230" y="63" text-anchor="middle" fill="#eab308" font-size="11" font-family="system-ui" font-weight="600">PENDING</text>
+          </g>
+          <g id="node-in_review">
+            <rect x="360" y="40" width="80" height="36" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+            <text x="400" y="63" text-anchor="middle" fill="#3b82f6" font-size="11" font-family="system-ui" font-weight="600">IN REVIEW</text>
+          </g>
+          <g id="node-approved">
+            <rect x="490" y="40" width="80" height="36" rx="6" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+            <text x="530" y="63" text-anchor="middle" fill="#22c55e" font-size="11" font-family="system-ui" font-weight="600">APPROVED</text>
+          </g>
+          <g id="node-rejected">
+            <rect x="265" y="142" width="80" height="36" rx="6" fill="#1e293b" stroke="#ef4444" stroke-width="1.5"/>
+            <text x="305" y="165" text-anchor="middle" fill="#ef4444" font-size="11" font-family="system-ui" font-weight="600">REJECTED</text>
+          </g>
+          <g id="node-published">
+            <rect x="420" y="188" width="90" height="36" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.5"/>
+            <text x="465" y="211" text-anchor="middle" fill="#10b981" font-size="11" font-family="system-ui" font-weight="600">PUBLISHED</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Audit timeline -->
+    <div class="panel">
+      <div class="panel-header">📋 Transition History</div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <!-- Code sample -->
+    <div class="panel">
+      <div class="panel-header">💻 How It Works — WorkflowService</div>
+      <div class="code-block">
+<span class="cm">// Single entry-point for all transitions</span>
+<span class="kw">public function</span> <span class="fn">transition</span>(
+    Document $document,
+    DocumentStatus $toStatus,
+    User $actor,
+    ?string $comment = <span class="kw">null</span>
+): Document {
+
+    <span class="cm">// 1. State machine guard</span>
+    <span class="kw">if</span> (!$document-><span class="fn">canTransitionTo</span>($toStatus)) {
+        <span class="kw">throw</span> ValidationException::<span class="fn">withMessages</span>([...]);
+    }
+
+    <span class="cm">// 2. RBAC guard</span>
+    <span class="kw">if</span> (!$actor-><span class="fn">canPerformTransition</span>($toStatus)) {
+        <span class="kw">throw new</span> AuthorizationException(...);
+    }
+
+    <span class="cm">// 3. Atomic DB write (status + ledger + audit)</span>
+    DB::<span class="fn">transaction</span>(<span class="kw">function</span>() { ... });
+
+    <span class="cm">// 4. Fire event — listeners handle mail async</span>
+    <span class="fn">event</span>(<span class="kw">new</span> DocumentTransitioned(...));
+
+    <span class="kw">return</span> $document-><span class="fn">fresh</span>();
+}</div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const ROLES = [
+  { id:'author',    name:'Author',    emoji:'✍️',  desc:'Creates & submits documents' },
+  { id:'reviewer',  name:'Reviewer',  emoji:'🔍', desc:'Picks up & reviews submissions' },
+  { id:'approver',  name:'Approver',  emoji:'✅', desc:'Approves or rejects reviewed docs' },
+  { id:'publisher', name:'Publisher', emoji:'🚀', desc:'Publishes approved documents' },
+  { id:'admin',     name:'Admin',     emoji:'⚡', desc:'Unrestricted access' },
+];
+
+const STATUSES = {
+  draft:     { label:'Draft',       color:'#64748b', dot:'#64748b' },
+  pending:   { label:'Pending Review', color:'#eab308', dot:'#eab308' },
+  in_review: { label:'In Review',   color:'#3b82f6', dot:'#3b82f6' },
+  approved:  { label:'Approved',    color:'#22c55e', dot:'#22c55e' },
+  rejected:  { label:'Rejected',    color:'#ef4444', dot:'#ef4444' },
+  published: { label:'Published',   color:'#10b981', dot:'#10b981' },
+};
+
+// State machine graph
+const TRANSITIONS = {
+  draft:     ['pending'],
+  pending:   ['in_review','rejected'],
+  in_review: ['approved','rejected'],
+  approved:  ['published'],
+  rejected:  ['draft'],
+  published: [],
+};
+
+// Role permissions
+const ROLE_PERMS = {
+  author:    ['pending','draft'],
+  reviewer:  ['in_review','rejected'],
+  approver:  ['approved','rejected'],
+  publisher: ['published'],
+  admin:     ['pending','in_review','approved','rejected','published','draft'],
+};
+
+// Who can submit (only the author can submit their OWN doc)
+const OWNERSHIP_REQUIRED = ['pending'];
+
+const ACTION_CONFIG = {
+  pending:   { label:'Submit for Review', cls:'btn-submit',  emoji:'📤' },
+  in_review: { label:'Start Review',      cls:'btn-review',  emoji:'🔍' },
+  approved:  { label:'Approve',           cls:'btn-approve', emoji:'✅' },
+  rejected:  { label:'Reject',            cls:'btn-reject',  emoji:'❌' },
+  published: { label:'Publish',           cls:'btn-publish', emoji:'🚀' },
+  draft:     { label:'Return to Draft',   cls:'btn-revise',  emoji:'↩️' },
+};
+
+let state = {
+  status: 'draft',
+  role: 'author',
+  history: [
+    { from: null, to: 'draft', actor: 'Alice Author', role: 'author', comment: null, time: new Date(Date.now() - 3600000) }
+  ],
+};
+
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  setTimeout(() => el.className = '', 2200);
+}
+
+function renderRoles() {
+  const el = document.getElementById('roleList');
+  el.innerHTML = ROLES.map(r => `
+    <button class="role-btn ${state.role===r.id?'active':''}" onclick="setRole('${r.id}')">
+      <span style="font-size:20px">${r.emoji}</span>
+      <span class="col">
+        <span class="role-name">${r.name}</span>
+        <span class="role-desc">${r.desc}</span>
+      </span>
+    </button>
+  `).join('');
+}
+
+function renderStatus() {
+  const s = STATUSES[state.status];
+  const dot = document.getElementById('statusDot');
+  const badge = document.getElementById('statusBadge');
+  dot.style.background = s.dot;
+  badge.textContent = s.label;
+  badge.style.background = s.dot + '22';
+  badge.style.color = s.dot;
+  highlightNode(state.status);
+}
+
+function renderActions() {
+  const el = document.getElementById('actions');
+  const allowed = TRANSITIONS[state.status];
+  const roleAllowed = ROLE_PERMS[state.role];
+
+  if (allowed.length === 0) {
+    el.innerHTML = `<p style="color:var(--muted);font-size:12px;text-align:center;padding:8px 0">Terminal state — no further transitions available.</p>`;
+    return;
+  }
+
+  el.innerHTML = allowed.map(to => {
+    const cfg = ACTION_CONFIG[to];
+    const canDo = roleAllowed.includes(to);
+    const reason = !canDo ? `title="Your role (${state.role}) cannot do this"` : '';
+    return `<button class="action-btn ${cfg.cls}" ${!canDo?'disabled':''} ${reason}
+      onclick="doTransition('${to}')">
+      <span>${cfg.emoji}</span> ${cfg.label}
+    </button>`;
+  }).join('');
+}
+
+function renderTimeline() {
+  const el = document.getElementById('timeline');
+  const EMOJIS = { draft:'📝', pending:'📤', in_review:'🔍', approved:'✅', rejected:'❌', published:'🚀' };
+
+  el.innerHTML = [...state.history].reverse().map((h, i) => {
+    const s = STATUSES[h.to];
+    const fromLabel = h.from ? STATUSES[h.from].label : '—';
+    const timeStr = h.time.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="timeline-item">
+        <div class="tl-dot" style="border-color:${s.dot}">${EMOJIS[h.to]||'•'}</div>
+        <div class="tl-content">
+          <div class="tl-header">
+            <span class="tl-label">${h.from ? `${fromLabel} → ${s.label}` : s.label}</span>
+            <span class="tl-time">${timeStr}</span>
+          </div>
+          <div class="tl-desc">${h.actor} <span style="color:var(--accent)">(${h.role})</span></div>
+          ${h.comment ? `<div class="tl-comment">"${h.comment}"</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function highlightNode(status) {
+  // Reset all nodes
+  document.querySelectorAll('[id^="node-"]').forEach(n => {
+    const rect = n.querySelector('rect');
+    if (rect) rect.style.filter = '';
+  });
+  const node = document.getElementById('node-' + status);
+  if (node) {
+    const rect = node.querySelector('rect');
+    if (rect) rect.style.filter = 'drop-shadow(0 0 8px currentColor)';
+  }
+}
+
+function setRole(role) {
+  state.role = role;
+  renderRoles();
+  renderActions();
+}
+
+function doTransition(to) {
+  const comment = document.getElementById('commentInput').value.trim();
+  const roleName = ROLES.find(r => r.id === state.role)?.name || state.role;
+  const fromStatus = state.status;
+
+  state.history.push({
+    from: fromStatus,
+    to,
+    actor: roleName,
+    role: state.role,
+    comment: comment || null,
+    time: new Date(),
+  });
+
+  state.status = to;
+  document.getElementById('commentInput').value = '';
+
+  renderStatus();
+  renderActions();
+  renderTimeline();
+
+  const toLabel = STATUSES[to].label;
+  toast(`✓ Transitioned to ${toLabel}`);
+}
+
+function render() {
+  renderRoles();
+  renderStatus();
+  renderActions();
+  renderTimeline();
+}
+
+render();
+</script>
+</body>
+</html>
