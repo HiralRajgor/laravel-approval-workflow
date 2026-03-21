@@ -3,6 +3,9 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
+         displayDetailsOnTestsThatTriggerDeprecations="false"
+         displayDetailsOnTestsThatTriggerNotices="false"
+         displayDetailsOnTestsThatTriggerWarnings="false"
 >
     <testsuites>
         <testsuite name="Unit">
@@ -20,28 +23,21 @@
     </source>
 
     <php>
-        <!-- These override .env during test runs — no .env.testing file needed -->
         <env name="APP_ENV"          value="testing"/>
         <env name="APP_KEY"          value="base64:2fl+Ktvkfl+Ktvkfl+Ktvkfl+Ktvkfl+Ktvkfl+Ktvk="/>
         <env name="APP_DEBUG"        value="true"/>
 
-        <!-- SQLite in-memory: fast, isolated, no file to clean up -->
         <env name="DB_CONNECTION"    value="sqlite"/>
         <env name="DB_DATABASE"      value=":memory:"/>
 
-        <!-- sync = queue jobs run immediately inline; no worker needed in tests -->
         <env name="QUEUE_CONNECTION" value="sync"/>
-
-        <!-- array = mail is captured in memory; Mail::assertQueued() still works -->
         <env name="MAIL_MAILER"      value="array"/>
 
-        <!-- Suppress bcrypt cost in tests for speed -->
         <env name="BCRYPT_ROUNDS"    value="4"/>
-
-        <!-- Cache stays in-memory so tests don't share state via file cache -->
         <env name="CACHE_STORE"      value="array"/>
-
-        <!-- Session in array so no cookie/file side-effects between tests -->
         <env name="SESSION_DRIVER"   value="array"/>
+
+        <!-- Suppress PDO::MYSQL_ATTR_SSL_CA deprecation from Laravel's bundled config -->
+        <ini name="error_reporting" value="E_ALL &amp; ~E_DEPRECATED &amp; ~E_USER_DEPRECATED"/>
     </php>
 </phpunit>
