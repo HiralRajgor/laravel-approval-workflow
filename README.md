@@ -341,6 +341,9 @@ Then open: [http://localhost:8000/api/documentation](http://localhost:8000/api/d
 
 ---
 
+## Live Demo
+[Live Demo](https://hiralrajgor.github.io/approval-workflow)
+
 ## Key Design Decisions
 
 See **[DECISIONS.md](./DECISIONS.md)** for full architectural decision records. Summary:
