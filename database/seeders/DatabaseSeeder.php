@@ -25,10 +25,10 @@ class DatabaseSeeder extends Seeder
         $created = [];
         foreach ($users as $data) {
             $created[$data['role']->value] = User::create([
-                'name'     => $data['name'],
-                'email'    => $data['email'],
+                'name' => $data['name'],
+                'email' => $data['email'],
                 'password' => Hash::make('password'),
-                'role'     => $data['role'],
+                'role' => $data['role'],
             ]);
         }
 
@@ -46,9 +46,9 @@ class DatabaseSeeder extends Seeder
 
         foreach ($samples as $data) {
             $doc = Document::create([
-                'title'     => $data['title'],
-                'body'      => "This is the body content of \"{$data['title']}\".\n\nLorem ipsum dolor sit amet.",
-                'status'    => $data['status'],
+                'title' => $data['title'],
+                'body' => "This is the body content of \"{$data['title']}\".\n\nLorem ipsum dolor sit amet.",
+                'status' => $data['status'],
                 'author_id' => $author->id,
             ]);
 
@@ -58,7 +58,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('✅ Seeded 5 users (one per role) and 6 sample documents.');
         $this->command->table(
             ['Role', 'Email', 'Password'],
-            array_map(fn ($u) => [$u['role']->label(), $u['email'], 'password'], $users)
+            array_map(fn ($u) => [$u['role']->label(), $u['email'], 'password'], $users),
         );
     }
 }

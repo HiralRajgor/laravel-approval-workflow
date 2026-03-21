@@ -16,7 +16,7 @@ class DocumentApprovedMail extends Mailable
 
     public function __construct(
         public readonly Document $document,
-        public readonly User     $approvedBy,
+        public readonly User $approvedBy,
     ) {}
 
     public function envelope(): Envelope
@@ -31,9 +31,9 @@ class DocumentApprovedMail extends Mailable
         return new Content(
             markdown: 'emails.document.approved',
             with: [
-                'document'   => $this->document,
+                'document' => $this->document,
                 'approvedBy' => $this->approvedBy,
-                'actionUrl'  => url("/documents/{$this->document->id}"),
+                'actionUrl' => url("/documents/{$this->document->id}"),
             ],
         );
     }

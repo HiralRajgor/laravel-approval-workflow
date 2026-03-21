@@ -76,12 +76,12 @@ class DocumentPolicy
     public function transition(User $user, Document $document, DocumentStatus $toStatus): bool
     {
         // The state machine must allow the edge first.
-        if (! $document->canTransitionTo($toStatus)) {
+        if (!$document->canTransitionTo($toStatus)) {
             return false;
         }
 
         // The user's role must cover the target state.
-        if (! $user->canPerformTransition($toStatus)) {
+        if (!$user->canPerformTransition($toStatus)) {
             return false;
         }
 

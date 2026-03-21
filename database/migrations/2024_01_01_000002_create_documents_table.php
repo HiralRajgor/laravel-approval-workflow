@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2024_01_01_000002_create_documents_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -20,8 +21,8 @@ return new class extends Migration
             $table->string('status')->default('draft')->index();
 
             $table->foreignId('author_id')
-                  ->constrained('users')
-                  ->cascadeOnDelete();
+                ->constrained('users')
+                ->cascadeOnDelete();
 
             // Tracks which step of a configurable workflow the document is on.
             $table->unsignedTinyInteger('current_step')->default(0);

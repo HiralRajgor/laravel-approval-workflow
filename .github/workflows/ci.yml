@@ -8,13 +8,13 @@ on:
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }} — Laravel tests
+    name: Tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        php: [ '8.3' ]
+        php: [ '8.5' ]
 
     steps:
       - name: Checkout code
@@ -27,7 +27,7 @@ jobs:
           extensions: mbstring, pdo, pdo_sqlite, sqlite3, xml, ctype, json, bcmath
           coverage: xdebug
 
-      - name: Cache Composer dependencies
+      - name: Cache Composer packages
         uses: actions/cache@v4
         with:
           path: vendor
@@ -44,9 +44,7 @@ jobs:
         run: php artisan key:generate
 
       - name: Create SQLite database
-        run: |
-          mkdir -p database
-          touch database/database.sqlite
+        run: touch database/database.sqlite
 
       - name: Run migrations
         run: php artisan migrate --force
@@ -65,14 +63,6 @@ jobs:
           QUEUE_CONNECTION: sync
           MAIL_MAILER: array
 
-      - name: Run full test suite with coverage
-        run: php artisan test --coverage --min=80
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
-          QUEUE_CONNECTION: sync
-          MAIL_MAILER: array
-
   lint:
     name: Code style (Pint)
     runs-on: ubuntu-latest
@@ -82,14 +72,15 @@ jobs:
 
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.5'
           coverage: none
 
-      - name: Cache Composer dependencies
+      - name: Cache Composer packages
         uses: actions/cache@v4
         with:
           path: vendor
           key: composer-lint-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-lint-
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader

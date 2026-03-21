@@ -3,21 +3,21 @@
 namespace Database\Factories;
 
 use App\Enums\DocumentStatus;
-use App\Enums\UserRole;
+use App\Models\Document;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Document>
+ * @extends Factory<Document>
  */
 class DocumentFactory extends Factory
 {
     public function definition(): array
     {
         return [
-            'title'     => $this->faker->sentence(4),
-            'body'      => $this->faker->paragraphs(3, asText: true),
-            'status'    => DocumentStatus::DRAFT,
+            'title' => $this->faker->sentence(4),
+            'body' => $this->faker->paragraphs(3, asText: true),
+            'status' => DocumentStatus::DRAFT,
             'author_id' => User::factory()->author(),
         ];
     }

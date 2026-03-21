@@ -4,20 +4,20 @@ namespace App\Enums;
 
 enum UserRole: string
 {
-    case AUTHOR    = 'author';
-    case REVIEWER  = 'reviewer';
-    case APPROVER  = 'approver';
+    case AUTHOR = 'author';
+    case REVIEWER = 'reviewer';
+    case APPROVER = 'approver';
     case PUBLISHER = 'publisher';
-    case ADMIN     = 'admin';
+    case ADMIN = 'admin';
 
     public function label(): string
     {
-        return match($this) {
-            self::AUTHOR    => 'Author',
-            self::REVIEWER  => 'Reviewer',
-            self::APPROVER  => 'Approver',
+        return match ($this) {
+            self::AUTHOR => 'Author',
+            self::REVIEWER => 'Reviewer',
+            self::APPROVER => 'Approver',
             self::PUBLISHER => 'Publisher',
-            self::ADMIN     => 'Administrator',
+            self::ADMIN => 'Administrator',
         };
     }
 
@@ -28,12 +28,12 @@ enum UserRole: string
      */
     public function allowedTransitions(): array
     {
-        return match($this) {
-            self::AUTHOR    => [DocumentStatus::PENDING],
-            self::REVIEWER  => [DocumentStatus::IN_REVIEW, DocumentStatus::REJECTED],
-            self::APPROVER  => [DocumentStatus::APPROVED, DocumentStatus::REJECTED],
+        return match ($this) {
+            self::AUTHOR => [DocumentStatus::PENDING],
+            self::REVIEWER => [DocumentStatus::IN_REVIEW, DocumentStatus::REJECTED],
+            self::APPROVER => [DocumentStatus::APPROVED, DocumentStatus::REJECTED],
             self::PUBLISHER => [DocumentStatus::PUBLISHED],
-            self::ADMIN     => DocumentStatus::cases(), // omnipotent
+            self::ADMIN => DocumentStatus::cases(), // omnipotent
         };
     }
 }

@@ -19,7 +19,7 @@ class DocumentSubmittedMail extends Mailable
 
     public function __construct(
         public readonly Document $document,
-        public readonly User     $submittedBy,
+        public readonly User $submittedBy,
     ) {}
 
     public function envelope(): Envelope
@@ -34,9 +34,9 @@ class DocumentSubmittedMail extends Mailable
         return new Content(
             markdown: 'emails.document.submitted',
             with: [
-                'document'    => $this->document,
+                'document' => $this->document,
                 'submittedBy' => $this->submittedBy,
-                'actionUrl'   => url("/documents/{$this->document->id}"),
+                'actionUrl' => url("/documents/{$this->document->id}"),
             ],
         );
     }

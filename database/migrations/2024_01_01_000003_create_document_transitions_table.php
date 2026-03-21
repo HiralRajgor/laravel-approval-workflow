@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2024_01_01_000003_create_document_transitions_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -14,14 +15,14 @@ return new class extends Migration
         Schema::create('document_transitions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')
-                  ->constrained('documents')
-                  ->cascadeOnDelete();
+                ->constrained('documents')
+                ->cascadeOnDelete();
 
             // Actor can be null for system-triggered transitions.
             $table->foreignId('actor_id')
-                  ->nullable()
-                  ->constrained('users')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             $table->string('from_status');
             $table->string('to_status');

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentStatus;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -18,8 +19,8 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password'          => 'hashed',
-        'role'              => UserRole::class,
+        'password' => 'hashed',
+        'role' => UserRole::class,
     ];
 
     // -------------------------------------------------------------------------
@@ -36,7 +37,7 @@ class User extends Authenticatable
         return $this->role === UserRole::ADMIN;
     }
 
-    public function canPerformTransition(\App\Enums\DocumentStatus $status): bool
+    public function canPerformTransition(DocumentStatus $status): bool
     {
         return in_array($status, $this->role->allowedTransitions(), strict: true);
     }

@@ -7,9 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDocumentRequest;
 use App\Http\Requests\TransitionDocumentRequest;
 use App\Http\Requests\UpdateDocumentRequest;
+use App\Http\Resources\AuditLogResource;
 use App\Http\Resources\DocumentResource;
 use App\Http\Resources\DocumentTransitionResource;
-use App\Http\Resources\AuditLogResource;
 use App\Models\Document;
 use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +20,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
  * @OA\Info(title="Document Approval Workflow API", version="1.0.0",
  *   description="Configurable multi-step document approval chain. Supports state-machine transitions, RBAC, audit log, and async mail notifications."
  * )
+ *
  * @OA\SecurityScheme(securityScheme="sanctum", type="http", scheme="bearer")
  */
 class DocumentController extends Controller
@@ -34,9 +35,12 @@ class DocumentController extends Controller
      *   summary="List all documents",
      *   tags={"Documents"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\Parameter(name="status", in="query", required=false,
+     *
      *     @OA\Schema(type="string", enum={"draft","pending","in_review","approved","rejected","published"})
      *   ),
+     *
      *   @OA\Response(response=200, description="Paginated document list")
      * )
      */
@@ -45,7 +49,7 @@ class DocumentController extends Controller
         $this->authorize('viewAny', Document::class);
 
         $query = Document::with(['author', 'latestTransition'])
-                         ->latest();
+            ->latest();
 
         if ($status = $request->query('status')) {
             $query->forStatus(DocumentStatus::from($status));
@@ -62,14 +66,18 @@ class DocumentController extends Controller
      *   summary="Create a new draft document",
      *   tags={"Documents"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\RequestBody(required=true,
+     *
      *     @OA\JsonContent(
      *       required={"title"},
+     *
      *       @OA\Property(property="title", type="string", maxLength=255),
      *       @OA\Property(property="body",  type="string"),
      *       @OA\Property(property="metadata", type="object")
      *     )
      *   ),
+     *
      *   @OA\Response(response=201, description="Document created"),
      *   @OA\Response(response=422, description="Validation error")
      * )
@@ -81,7 +89,7 @@ class DocumentController extends Controller
         $document = Document::create([
             ...$request->validated(),
             'author_id' => $request->user()->id,
-            'status'    => DocumentStatus::DRAFT,
+            'status' => DocumentStatus::DRAFT,
         ]);
 
         $document->logAuditEvent('created', ['title' => $document->title]);
@@ -99,7 +107,9 @@ class DocumentController extends Controller
      *   summary="Get a single document",
      *   tags={"Documents"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *   @OA\Response(response=200, description="Document detail"),
      *   @OA\Response(response=404, description="Not found")
      * )
@@ -109,7 +119,7 @@ class DocumentController extends Controller
         $this->authorize('view', $document);
 
         return new DocumentResource(
-            $document->load(['author', 'transitions.actor', 'latestTransition'])
+            $document->load(['author', 'transitions.actor', 'latestTransition']),
         );
     }
 
@@ -121,13 +131,18 @@ class DocumentController extends Controller
      *   summary="Update a draft or rejected document",
      *   tags={"Documents"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *   @OA\RequestBody(required=true,
+     *
      *     @OA\JsonContent(
+     *
      *       @OA\Property(property="title", type="string"),
      *       @OA\Property(property="body",  type="string")
      *     )
      *   ),
+     *
      *   @OA\Response(response=200, description="Document updated"),
      *   @OA\Response(response=403, description="Forbidden — not in editable state")
      * )
@@ -150,7 +165,9 @@ class DocumentController extends Controller
      *   summary="Soft-delete a draft document",
      *   tags={"Documents"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *   @OA\Response(response=204, description="Deleted"),
      *   @OA\Response(response=403, description="Forbidden")
      * )
@@ -173,16 +190,21 @@ class DocumentController extends Controller
      *   summary="Transition a document to a new status",
      *   tags={"Workflow"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *   @OA\RequestBody(required=true,
+     *
      *     @OA\JsonContent(
      *       required={"status"},
+     *
      *       @OA\Property(property="status", type="string",
      *         enum={"pending","in_review","approved","rejected","published","draft"}
      *       ),
      *       @OA\Property(property="comment", type="string", description="Optional reviewer comment")
      *     )
      *   ),
+     *
      *   @OA\Response(response=200, description="Transition successful"),
      *   @OA\Response(response=403, description="Forbidden — role or state mismatch"),
      *   @OA\Response(response=422, description="Invalid transition")
@@ -212,7 +234,9 @@ class DocumentController extends Controller
      *   summary="Full transition history for a document",
      *   tags={"Workflow"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *   @OA\Response(response=200, description="Transition list")
      * )
      */
@@ -221,7 +245,7 @@ class DocumentController extends Controller
         $this->authorize('view', $document);
 
         return DocumentTransitionResource::collection(
-            $document->transitions()->with('actor')->get()
+            $document->transitions()->with('actor')->get(),
         );
     }
 
@@ -231,7 +255,9 @@ class DocumentController extends Controller
      *   summary="Audit log for a document",
      *   tags={"Workflow"},
      *   security={{"sanctum":{}}},
+     *
      *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *
      *   @OA\Response(response=200, description="Audit entries")
      * )
      */
@@ -240,7 +266,7 @@ class DocumentController extends Controller
         $this->authorize('viewAuditLog', $document);
 
         return AuditLogResource::collection(
-            $document->auditLogs()->with('user')->get()
+            $document->auditLogs()->with('user')->get(),
         );
     }
 }

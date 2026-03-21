@@ -1,11 +1,11 @@
 {
-    "name": "your-username/laravel-approval-workflow",
+    "name": "hiralrajgor/laravel-approval-workflow",
     "description": "Production-grade document approval workflow engine — state machine, RBAC, async mail, audit trail.",
     "keywords": ["laravel", "workflow", "approval", "state-machine", "rbac"],
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": "^8.3",
+        "php": "^8.3|^8.4|^8.5",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
         "darkaonline/l5-swagger": "^8.6"

@@ -4,11 +4,11 @@ namespace App\Enums;
 
 enum DocumentStatus: string
 {
-    case DRAFT     = 'draft';
-    case PENDING   = 'pending';
+    case DRAFT = 'draft';
+    case PENDING = 'pending';
     case IN_REVIEW = 'in_review';
-    case APPROVED  = 'approved';
-    case REJECTED  = 'rejected';
+    case APPROVED = 'approved';
+    case REJECTED = 'rejected';
     case PUBLISHED = 'published';
 
     /**
@@ -16,12 +16,12 @@ enum DocumentStatus: string
      */
     public function label(): string
     {
-        return match($this) {
-            self::DRAFT     => 'Draft',
-            self::PENDING   => 'Pending Review',
+        return match ($this) {
+            self::DRAFT => 'Draft',
+            self::PENDING => 'Pending Review',
             self::IN_REVIEW => 'In Review',
-            self::APPROVED  => 'Approved',
-            self::REJECTED  => 'Rejected',
+            self::APPROVED => 'Approved',
+            self::REJECTED => 'Rejected',
             self::PUBLISHED => 'Published',
         };
     }
@@ -34,12 +34,12 @@ enum DocumentStatus: string
      */
     public function allowedTransitions(): array
     {
-        return match($this) {
-            self::DRAFT     => [self::PENDING],
-            self::PENDING   => [self::IN_REVIEW, self::REJECTED],
+        return match ($this) {
+            self::DRAFT => [self::PENDING],
+            self::PENDING => [self::IN_REVIEW, self::REJECTED],
             self::IN_REVIEW => [self::APPROVED, self::REJECTED],
-            self::APPROVED  => [self::PUBLISHED],
-            self::REJECTED  => [self::DRAFT],
+            self::APPROVED => [self::PUBLISHED],
+            self::REJECTED => [self::DRAFT],
             self::PUBLISHED => [],
         };
     }
@@ -65,12 +65,12 @@ enum DocumentStatus: string
      */
     public function color(): string
     {
-        return match($this) {
-            self::DRAFT     => 'gray',
-            self::PENDING   => 'yellow',
+        return match ($this) {
+            self::DRAFT => 'gray',
+            self::PENDING => 'yellow',
             self::IN_REVIEW => 'blue',
-            self::APPROVED  => 'green',
-            self::REJECTED  => 'red',
+            self::APPROVED => 'green',
+            self::REJECTED => 'red',
             self::PUBLISHED => 'emerald',
         };
     }

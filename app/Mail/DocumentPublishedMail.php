@@ -16,7 +16,7 @@ class DocumentPublishedMail extends Mailable
 
     public function __construct(
         public readonly Document $document,
-        public readonly User     $publishedBy,
+        public readonly User $publishedBy,
     ) {}
 
     public function envelope(): Envelope
@@ -31,9 +31,9 @@ class DocumentPublishedMail extends Mailable
         return new Content(
             markdown: 'emails.document.published',
             with: [
-                'document'    => $this->document,
+                'document' => $this->document,
                 'publishedBy' => $this->publishedBy,
-                'actionUrl'   => url("/documents/{$this->document->id}"),
+                'actionUrl' => url("/documents/{$this->document->id}"),
             ],
         );
     }

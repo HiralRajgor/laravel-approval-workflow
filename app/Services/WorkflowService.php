@@ -6,6 +6,7 @@ use App\Enums\DocumentStatus;
 use App\Events\DocumentTransitioned;
 use App\Models\Document;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -29,17 +30,17 @@ class WorkflowService
     /**
      * Transition a document to the given status.
      *
-     * @throws \Illuminate\Validation\ValidationException  On invalid transition.
-     * @throws \Illuminate\Auth\Access\AuthorizationException  On policy failure.
+     * @throws ValidationException On invalid transition.
+     * @throws AuthorizationException On policy failure.
      */
     public function transition(
         Document $document,
         DocumentStatus $toStatus,
         User $actor,
-        ?string $comment = null
+        ?string $comment = null,
     ): Document {
         // ── 1. State-machine guard ─────────────────────────────────────────
-        if (! $document->canTransitionTo($toStatus)) {
+        if (!$document->canTransitionTo($toStatus)) {
             throw ValidationException::withMessages([
                 'status' => sprintf(
                     'Cannot transition from [%s] to [%s]. Allowed next states: [%s].',
@@ -47,16 +48,16 @@ class WorkflowService
                     $toStatus->label(),
                     implode(', ', array_map(
                         fn ($s) => $s->label(),
-                        $document->status->allowedTransitions()
-                    )) ?: 'none'
+                        $document->status->allowedTransitions(),
+                    )) ?: 'none',
                 ),
             ]);
         }
 
         // ── 2. Role / permission guard ─────────────────────────────────────
-        if (! $actor->isAdmin() && ! $actor->canPerformTransition($toStatus)) {
-            throw new \Illuminate\Auth\Access\AuthorizationException(
-                "Your role [{$actor->role->label()}] is not permitted to move a document to [{$toStatus->label()}]."
+        if (!$actor->isAdmin() && !$actor->canPerformTransition($toStatus)) {
+            throw new AuthorizationException(
+                "Your role [{$actor->role->label()}] is not permitted to move a document to [{$toStatus->label()}].",
             );
         }
 
@@ -69,17 +70,17 @@ class WorkflowService
 
             // b) Append an immutable transition record (the ledger)
             $transition = $document->transitions()->create([
-                'actor_id'    => $actor->id,
+                'actor_id' => $actor->id,
                 'from_status' => $fromStatus,
-                'to_status'   => $toStatus,
-                'comment'     => $comment,
-                'ip_address'  => request()?->ip(),
+                'to_status' => $toStatus,
+                'comment' => $comment,
+                'ip_address' => request()?->ip(),
             ]);
 
             // c) Append to the generic audit log (different purpose: who touched what)
             $document->logAuditEvent('status_changed', [
-                'from'    => $fromStatus->value,
-                'to'      => $toStatus->value,
+                'from' => $fromStatus->value,
+                'to' => $toStatus->value,
                 'comment' => $comment,
             ], $actor->id);
         });

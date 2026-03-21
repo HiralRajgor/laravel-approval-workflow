@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2024_01_01_000004_create_audit_logs_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -16,9 +17,9 @@ return new class extends Migration
             $table->morphs('auditable');
 
             $table->foreignId('user_id')
-                  ->nullable()
-                  ->constrained('users')
-                  ->nullOnDelete();
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             // Short machine-readable verb: 'created', 'updated', 'status_changed', 'deleted'
             $table->string('event', 64)->index();

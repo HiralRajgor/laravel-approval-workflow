@@ -26,11 +26,11 @@ class DocumentTransitioned
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public readonly Document       $document,
+        public readonly Document $document,
         public readonly DocumentStatus $fromStatus,
         public readonly DocumentStatus $toStatus,
-        public readonly User           $actor,
-        public readonly ?string        $comment = null,
+        public readonly User $actor,
+        public readonly ?string $comment = null,
     ) {}
 
     /**
@@ -39,7 +39,7 @@ class DocumentTransitioned
     public function isSubmission(): bool
     {
         return $this->fromStatus === DocumentStatus::DRAFT
-            && $this->toStatus  === DocumentStatus::PENDING;
+            && $this->toStatus === DocumentStatus::PENDING;
     }
 
     /**

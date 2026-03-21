@@ -4,27 +4,29 @@ namespace App\Models;
 
 use App\Enums\DocumentStatus;
 use App\Traits\HasAuditLog;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property int            $id
- * @property string         $title
- * @property string|null    $body
+ * @property int $id
+ * @property string $title
+ * @property string|null $body
  * @property DocumentStatus $status
- * @property int            $author_id
- * @property int|null       $current_step
- * @property array|null     $workflow_config
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property \Carbon\Carbon|null $deleted_at
+ * @property int $author_id
+ * @property int|null $current_step
+ * @property array|null $workflow_config
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  */
 class Document extends Model
 {
-    use HasFactory, SoftDeletes, HasAuditLog;
+    use HasAuditLog, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'title',
@@ -37,9 +39,9 @@ class Document extends Model
     ];
 
     protected $casts = [
-        'status'          => DocumentStatus::class,
+        'status' => DocumentStatus::class,
         'workflow_config' => 'array',
-        'metadata'        => 'array',
+        'metadata' => 'array',
     ];
 
     // -------------------------------------------------------------------------
@@ -56,7 +58,7 @@ class Document extends Model
         return $this->hasMany(DocumentTransition::class)->latest();
     }
 
-    public function latestTransition(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function latestTransition(): HasOne
     {
         return $this->hasOne(DocumentTransition::class)->latestOfMany();
     }

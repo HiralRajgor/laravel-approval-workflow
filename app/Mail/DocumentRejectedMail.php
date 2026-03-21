@@ -16,8 +16,8 @@ class DocumentRejectedMail extends Mailable
 
     public function __construct(
         public readonly Document $document,
-        public readonly User     $rejectedBy,
-        public readonly ?string  $comment = null,
+        public readonly User $rejectedBy,
+        public readonly ?string $comment = null,
     ) {}
 
     public function envelope(): Envelope
@@ -32,10 +32,10 @@ class DocumentRejectedMail extends Mailable
         return new Content(
             markdown: 'emails.document.rejected',
             with: [
-                'document'   => $this->document,
+                'document' => $this->document,
                 'rejectedBy' => $this->rejectedBy,
-                'comment'    => $this->comment,
-                'actionUrl'  => url("/documents/{$this->document->id}"),
+                'comment' => $this->comment,
+                'actionUrl' => url("/documents/{$this->document->id}"),
             ],
         );
     }

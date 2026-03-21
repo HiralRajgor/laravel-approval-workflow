@@ -12,6 +12,7 @@ use App\Mail\DocumentSubmittedMail;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -51,10 +52,10 @@ class SendTransitionNotification implements ShouldQueue
     {
         match (true) {
             $event->isSubmission() => $this->notifyOnSubmission($event),
-            $event->isApproval()   => $this->notifyOnApproval($event),
-            $event->isRejection()  => $this->notifyOnRejection($event),
-            $event->isPublished()  => $this->notifyOnPublished($event),
-            default                => $this->notifyReviewStarted($event),
+            $event->isApproval() => $this->notifyOnApproval($event),
+            $event->isRejection() => $this->notifyOnRejection($event),
+            $event->isPublished() => $this->notifyOnPublished($event),
+            default => $this->notifyReviewStarted($event),
         };
     }
 
@@ -65,7 +66,7 @@ class SendTransitionNotification implements ShouldQueue
 
         foreach ($reviewers as $reviewer) {
             Mail::to($reviewer)->queue(
-                new DocumentSubmittedMail($event->document, $event->actor)
+                new DocumentSubmittedMail($event->document, $event->actor),
             );
         }
     }
@@ -74,13 +75,13 @@ class SendTransitionNotification implements ShouldQueue
     private function notifyOnApproval(DocumentTransitioned $event): void
     {
         Mail::to($event->document->author)->queue(
-            new DocumentApprovedMail($event->document, $event->actor)
+            new DocumentApprovedMail($event->document, $event->actor),
         );
 
         $publishers = User::where('role', UserRole::PUBLISHER->value)->get();
         foreach ($publishers as $publisher) {
             Mail::to($publisher)->queue(
-                new DocumentApprovedMail($event->document, $event->actor)
+                new DocumentApprovedMail($event->document, $event->actor),
             );
         }
     }
@@ -89,7 +90,7 @@ class SendTransitionNotification implements ShouldQueue
     private function notifyOnRejection(DocumentTransitioned $event): void
     {
         Mail::to($event->document->author)->queue(
-            new DocumentRejectedMail($event->document, $event->actor, $event->comment)
+            new DocumentRejectedMail($event->document, $event->actor, $event->comment),
         );
     }
 
@@ -97,7 +98,7 @@ class SendTransitionNotification implements ShouldQueue
     private function notifyOnPublished(DocumentTransitioned $event): void
     {
         Mail::to($event->document->author)->queue(
-            new DocumentPublishedMail($event->document, $event->actor)
+            new DocumentPublishedMail($event->document, $event->actor),
         );
     }
 
@@ -106,7 +107,7 @@ class SendTransitionNotification implements ShouldQueue
     {
         if ($event->toStatus === DocumentStatus::IN_REVIEW) {
             Mail::to($event->document->author)->queue(
-                new DocumentSubmittedMail($event->document, $event->actor)
+                new DocumentSubmittedMail($event->document, $event->actor),
             );
         }
     }
@@ -116,10 +117,10 @@ class SendTransitionNotification implements ShouldQueue
      */
     public function failed(DocumentTransitioned $event, \Throwable $exception): void
     {
-        \Illuminate\Support\Facades\Log::error('Notification dispatch failed', [
+        Log::error('Notification dispatch failed', [
             'document_id' => $event->document->id,
-            'transition'  => "{$event->fromStatus->value} → {$event->toStatus->value}",
-            'error'       => $exception->getMessage(),
+            'transition' => "{$event->fromStatus->value} → {$event->toStatus->value}",
+            'error' => $exception->getMessage(),
         ]);
     }
 }

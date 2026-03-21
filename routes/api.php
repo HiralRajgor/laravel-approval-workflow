@@ -23,8 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('documents', DocumentController::class);
 
     // ── Workflow-specific actions ───────────────────────────────────────────
-    Route::post  ('documents/{document}/transition', [DocumentController::class, 'transition'])->name('documents.transition');
-    Route::get   ('documents/{document}/history',    [DocumentController::class, 'history'])->name('documents.history');
-    Route::get   ('documents/{document}/audit',      [DocumentController::class, 'auditLog'])->name('documents.audit');
+    Route::post('documents/{document}/transition', [DocumentController::class, 'transition'])->name('documents.transition');
+    Route::get('documents/{document}/history', [DocumentController::class, 'history'])->name('documents.history');
+    Route::get('documents/{document}/audit', [DocumentController::class, 'auditLog'])->name('documents.audit');
 
 });

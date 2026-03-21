@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/2024_01_01_000006_create_personal_access_tokens_table.php
 
 use Illuminate\Database\Migrations\Migration;

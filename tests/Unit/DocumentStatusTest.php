@@ -62,7 +62,7 @@ class DocumentStatusTest extends TestCase
     public function rejected_can_return_to_draft_for_revision(): void
     {
         $this->assertTrue(
-            DocumentStatus::REJECTED->canTransitionTo(DocumentStatus::DRAFT)
+            DocumentStatus::REJECTED->canTransitionTo(DocumentStatus::DRAFT),
         );
     }
 
@@ -83,7 +83,7 @@ class DocumentStatusTest extends TestCase
         foreach ($invalidEdges as [$from, $to]) {
             $this->assertFalse(
                 $from->canTransitionTo($to),
-                "Expected [{$from->label()}] → [{$to->label()}] to be INVALID but it was allowed."
+                "Expected [{$from->label()}] → [{$to->label()}] to be INVALID but it was allowed.",
             );
         }
     }

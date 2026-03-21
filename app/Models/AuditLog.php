@@ -12,8 +12,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  */
 class AuditLog extends Model
 {
-    public $timestamps  = false;
-    const CREATED_AT    = 'created_at';
+    public $timestamps = false;
+
+    const CREATED_AT = 'created_at';
 
     protected $fillable = [
         'auditable_type',
@@ -26,7 +27,7 @@ class AuditLog extends Model
     ];
 
     protected $casts = [
-        'meta'       => 'array',
+        'meta' => 'array',
         'created_at' => 'datetime',
     ];
 

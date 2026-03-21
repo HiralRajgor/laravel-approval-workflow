@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DocumentStatus;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -10,20 +11,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Immutable ledger row created every time a document changes state.
  * Never updated, never deleted — it is the audit spine of the workflow.
  *
- * @property int            $id
- * @property int            $document_id
- * @property int|null       $actor_id
+ * @property int $id
+ * @property int $document_id
+ * @property int|null $actor_id
  * @property DocumentStatus $from_status
  * @property DocumentStatus $to_status
- * @property string|null    $comment
- * @property string|null    $ip_address
- * @property \Carbon\Carbon $created_at
+ * @property string|null $comment
+ * @property string|null $ip_address
+ * @property Carbon $created_at
  */
 class DocumentTransition extends Model
 {
     // Transitions are written once and never mutated.
     public $timestamps = false;
-    const CREATED_AT  = 'created_at';
+
+    const CREATED_AT = 'created_at';
 
     protected $fillable = [
         'document_id',
@@ -37,8 +39,8 @@ class DocumentTransition extends Model
 
     protected $casts = [
         'from_status' => DocumentStatus::class,
-        'to_status'   => DocumentStatus::class,
-        'created_at'  => 'datetime',
+        'to_status' => DocumentStatus::class,
+        'created_at' => 'datetime',
     ];
 
     // Force created_at to be set on insert even without updated_at
@@ -70,8 +72,8 @@ class DocumentTransition extends Model
     public function summary(): string
     {
         $actor = $this->actor?->name ?? 'System';
-        $from  = $this->from_status->label();
-        $to    = $this->to_status->label();
+        $from = $this->from_status->label();
+        $to = $this->to_status->label();
 
         return "{$actor} moved document from {$from} → {$to}";
     }
