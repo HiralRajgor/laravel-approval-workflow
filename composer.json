@@ -36,15 +36,20 @@
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
         ],
-        "test": [
-            "@php artisan test"
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
-        "test:coverage": [
-            "@php artisan test --coverage"
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
         ],
-        "lint": [
-            "./vendor/bin/pint"
-        ]
+        "test": "php artisan test",
+        "test:unit": "php artisan test --testsuite=Unit",
+        "test:feature": "php artisan test --testsuite=Feature",
+        "test:coverage": "php artisan test --coverage --min=80",
+        "lint": "./vendor/bin/pint",
+        "lint:check": "./vendor/bin/pint --test"
     },
     "extra": {
         "laravel": {
@@ -54,7 +59,11 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true
